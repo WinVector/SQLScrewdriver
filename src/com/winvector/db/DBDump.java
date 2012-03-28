@@ -1,7 +1,6 @@
 package com.winvector.db;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.net.URI;
 import java.sql.ResultSet;
@@ -68,7 +67,7 @@ public class DBDump {
 		System.out.println("\tresultFile:\t" + resFile.getAbsolutePath());
 		final DBHandle handle = DBUtil.buildConnection(propsURI,true);
 		System.out.println("\tdb:\t" + handle);
-		final PrintStream p = new PrintStream(new FileOutputStream(resFile));
+		final PrintStream p = TrivialReader.openPrintStream(resFile);
 		
 		final long nRows = runQuery(query,p,handle);
 		
