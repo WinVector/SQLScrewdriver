@@ -31,13 +31,29 @@ public final class DBIterable implements Iterable<BurstMap> {
 		this.stmt = stmt;
 		this.query = query;
 	}
+	
+	public static final class TypeInfo {
+		public final String columnName;
+		public final String columnLabel;
+		public final String tableName;
+		public final String javaClassName;
+		public final int sqlColumnType; 
+		
+		public TypeInfo(final ResultSetMetaData rsm, final int idx) throws SQLException {
+			javaClassName = rsm.getColumnClassName(idx);
+			sqlColumnType = rsm.getColumnType(idx);
+			columnName = rsm.getColumnName(idx);
+			columnLabel = rsm.getColumnLabel(idx);
+			tableName = rsm.getTableName(idx);
+		}
+	}
 
 	public static final class RSIterator implements Iterator<BurstMap> {
 		private BurstMap next = null;
 		private ResultSet rs;
 		private final String[] colNames;
 		private final int[] colTypes;
-		private final Map<String,String> colNameToJavaClassName = new HashMap<String,String>();
+		private final Map<String,TypeInfo> colNameToJavaClassName = new HashMap<String,TypeInfo>();
 		
 		public RSIterator(final ResultSet rs) throws SQLException {
 			this.rs = rs;
@@ -46,17 +62,17 @@ public final class DBIterable implements Iterable<BurstMap> {
 				final int n = meta.getColumnCount();
 				final String[] origColNames = new String[n];
 				colTypes = new int[n];
-				final String[] javaClassNames = new String[n];
+				final TypeInfo[] infos = new TypeInfo[n];
 				for(int i=0;i<n;++i) {
 					// could also prepend (when appropriate) meta.getTableName(i+1);
 					//origColNames[i] = meta.getColumnName(i+1);
 					origColNames[i] = meta.getColumnLabel(i+1);
 					colTypes[i] = meta.getColumnType(i+1);
-					javaClassNames[i] = meta.getColumnClassName(i+1);
+					infos[i] = new TypeInfo(meta,i+1);
 				}
 				colNames = HBurster.buildHeaderFlds(origColNames);
 				for(int i=0;i<n;++i) {
-					colNameToJavaClassName.put(colNames[i],javaClassNames[i]);
+					colNameToJavaClassName.put(colNames[i],infos[i]);
 				}
 			} else {
 				rs.close();
@@ -67,7 +83,7 @@ public final class DBIterable implements Iterable<BurstMap> {
 			advance();
 		}
 
-		public String getJavaClassName(final String colName) {
+		public TypeInfo getJavaClassName(final String colName) {
 			return colNameToJavaClassName.get(colName);
 		}
 		
@@ -81,6 +97,12 @@ public final class DBIterable implements Iterable<BurstMap> {
 						switch(colTypes[i]) {
 						case java.sql.Types.DATE:
 							mp.put(colNames[i],rs.getDate(i+1));
+							break;
+						case java.sql.Types.TIME:
+							mp.put(colNames[i],rs.getTime(i+1));
+							break;
+						case java.sql.Types.TIMESTAMP:
+							mp.put(colNames[i],rs.getTimestamp(i+1));
 							break;
 						case java.sql.Types.BIGINT:
 							mp.put(colNames[i],rs.getLong(i+1));

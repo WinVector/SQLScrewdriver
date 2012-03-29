@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.Date;
 
 import com.winvector.db.DBIterable.RSIterator;
+import com.winvector.db.DBIterable.TypeInfo;
 import com.winvector.db.DBUtil.DBHandle;
 import com.winvector.util.BurstMap;
 import com.winvector.util.TrivialReader;
@@ -33,7 +34,8 @@ public class DBDump {
 					} else {
 						p.print(sep);
 					}
-					p.print(TrivialReader.safeStr(ki) + ":" + source.getJavaClassName(ki));
+					final TypeInfo columnInfo = source.getJavaClassName(ki);
+					p.print(TrivialReader.safeStr(ki) + ":" + columnInfo.sqlColumnType);
 				}
 				p.println();
 				first = false;
