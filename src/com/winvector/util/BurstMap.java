@@ -31,6 +31,20 @@ public final class BurstMap {
 		return v.toString();
 	}
 	
+	public static boolean missingValue(final String s) {
+		if(s==null) {
+			return true;
+		}
+		final String t = s.trim().toLowerCase();
+		if(t.length()<=0) {
+			return true;
+		}
+		if(t.equals("na")||t.equals("null")) {
+			return true;
+		}
+		return false;
+	}
+	
 	public Double getAsDouble(final String key) {
 		final Object v = burst.get(key);
 		if(v==null) {
@@ -39,8 +53,12 @@ public final class BurstMap {
 		if(v instanceof Number) {
 			return ((Number)v).doubleValue();
 		}
+		final String vstr = v.toString();
+		if(missingValue(vstr)) {
+			return null;
+		}
 		try {
-			return Double.parseDouble(v.toString());
+			return Double.parseDouble(vstr);
 		} catch (Exception ex) {
 			return null;
 		}
@@ -54,8 +72,12 @@ public final class BurstMap {
 		if(v instanceof Number) {
 			return ((Number)v).longValue();
 		}
+		final String vstr = v.toString();
+		if(missingValue(vstr)) {
+			return null;
+		}
 		try {
-			return Long.parseLong(v.toString());
+			return Long.parseLong(vstr);
 		} catch (Exception ex) {
 			return null;
 		}

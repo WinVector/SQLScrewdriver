@@ -155,6 +155,7 @@ public class LoadTable {
 		return k;
 	}
 	
+
 	
 	public static void loadTable(final Iterable<BurstMap> source, final RowCritique gateKeeper,
 			final String tableName, final DBHandle handle) throws SQLException {
@@ -181,7 +182,7 @@ public class LoadTable {
 					final String v = row.getAsString(k);
 					if(v!=null) {
 						final int vlength = v.length();
-						if(vlength>0) {
+						if((vlength>0)&&(!BurstMap.missingValue(v))) {
 							sizes[i] = Math.max(sizes[i],vlength+1);
 							if(isNumeric[i]) {
 								if((vlength>38)||(!doubleRegexp.matcher(v).matches())) {
@@ -310,6 +311,7 @@ public class LoadTable {
 					}
 				}
 			}
+			System.out.println("\tdone, wrote " + nInserted + "\t" + new Date());
 			stmtA.close();
 		}
 	}
