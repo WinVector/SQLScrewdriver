@@ -3,7 +3,6 @@ package com.winvector.db;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URI;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
@@ -19,10 +18,9 @@ public class DBDump {
 	
 	public static long runQuery(final String query, final PrintStream p, final DBHandle handle) throws SQLException {
 		final Statement stmt = handle.createReadStatement();
-		final ResultSet rs = stmt.executeQuery(query);
-		final RSIterator source = new RSIterator(rs);
-		boolean first = true;
+		final RSIterator source = new RSIterator(stmt.executeQuery(query));
 		final String sep = "\t";
+		boolean first = true;
 		long rowNum = 0;
 		while(source.hasNext()) {
 			final BurstMap row = source.next();
