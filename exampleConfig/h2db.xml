@@ -1,0 +1,9 @@
+
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+ <comment>testdb</comment>
+ <entry key="user">u</entry>
+ <entry key="password">u</entry>
+ <entry key="url">jdbc:h2:~/Downloads/h2demodb_h2</entry>
+ <entry key="driver">org.h2.Driver</entry>
+</properties>
