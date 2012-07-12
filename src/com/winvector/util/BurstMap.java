@@ -58,7 +58,7 @@ public final class BurstMap {
 			return null;
 		}
 		try {
-			return Double.parseDouble(vstr);
+			return Double.parseDouble(vstr.trim());
 		} catch (Exception ex) {
 			return null;
 		}
@@ -77,7 +77,7 @@ public final class BurstMap {
 			return null;
 		}
 		try {
-			return Long.parseLong(vstr);
+			return Long.parseLong(vstr.trim());
 		} catch (Exception ex) {
 			return null;
 		}

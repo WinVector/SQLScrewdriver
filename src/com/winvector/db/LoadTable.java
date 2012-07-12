@@ -179,8 +179,9 @@ public class LoadTable {
 				}
 				int i = 0;
 				for(final String k: keys) {
-					final String v = row.getAsString(k);
+					String v = row.getAsString(k);
 					if(v!=null) {
+						v = v.trim();
 						final int vlength = v.length();
 						if((vlength>0)&&(!BurstMap.missingValue(v))) {
 							sizes[i] = Math.max(sizes[i],vlength+1);
