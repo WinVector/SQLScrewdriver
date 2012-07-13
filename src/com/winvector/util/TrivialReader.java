@@ -29,6 +29,7 @@ import java.util.zip.GZIPOutputStream;
 public class TrivialReader implements Iterable<BurstMap> {
 	public final URI srcURI;
 	public final String encoding;
+	public final boolean allowPartials;
 	public final ErrorPolicy<String,String[]> errorPolicy;
 	private final boolean intern;
 	private String escapedSep;
@@ -57,10 +58,11 @@ public class TrivialReader implements Iterable<BurstMap> {
 		p.println();
 	}
 	
-	public TrivialReader(final URI srcURI, final char sep, final String encoding, final ErrorPolicy<String,String[]> errorPolicy, 
+	public TrivialReader(final URI srcURI, final char sep, final String encoding, final boolean allowPartials, final ErrorPolicy<String,String[]> errorPolicy, 
 			final boolean intern) {
 		this.srcURI = srcURI;
 		this.encoding = encoding;
+		this.allowPartials = allowPartials;
 		this.errorPolicy = errorPolicy;
 		this.intern = intern;
 		Map<Character,String> escapes = new TreeMap<Character,String>();
@@ -99,6 +101,7 @@ public class TrivialReader implements Iterable<BurstMap> {
 	public static final class TrivialIterator implements Iterator<BurstMap> {
 		private LineNumberReader reader;
 		final String header;
+		final boolean allowPartials;
 		@SuppressWarnings("unused")
 		private int lineNum = 0;
 		private String rawLine = null;
@@ -106,9 +109,10 @@ public class TrivialReader implements Iterable<BurstMap> {
 		private final LineBurster burster;
 		private final String comment;
 		
-		public TrivialIterator(final LineNumberReader reader, final String escapedSep, final boolean intern, final String comment) throws IOException {
+		public TrivialIterator(final LineNumberReader reader, final String escapedSep, final boolean allowPartials, final boolean intern, final String comment) throws IOException {
 			this.reader = reader;
 			this.comment = comment;
+			this.allowPartials = allowPartials;
 			header = getLine();
 			if(header==null) {
 				burster = null;
@@ -160,7 +164,7 @@ public class TrivialReader implements Iterable<BurstMap> {
 				if(line!=null) {
 					next = burster.parse(line);
 					if(next!=null) {
-						if(next.isEmpty()||(!burster.haveAllFields(next))) {
+						if(next.isEmpty()||((!allowPartials)&&(!burster.haveAllFields(next)))) {
 							next = null;
 						}
 					}
@@ -198,7 +202,7 @@ public class TrivialReader implements Iterable<BurstMap> {
 	@Override
 	public TrivialIterator iterator() {
 		try {
-			return new TrivialIterator(openBufferedReader(srcURI,encoding),escapedSep,intern,srcURI.toString());
+			return new TrivialIterator(openBufferedReader(srcURI,encoding),escapedSep,allowPartials,intern,srcURI.toString());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

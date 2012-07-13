@@ -37,7 +37,7 @@ public class LoadTable {
 		final DBHandle handle = DBUtil.buildConnection(propsURI,false);
 		System.out.println("\tdb:\t" + handle);
 		
-		final Iterable<BurstMap> source = new TrivialReader(inURI,sep,null,null, false);
+		final Iterable<BurstMap> source = new TrivialReader(inURI,sep,null,true,null, false);
 		loadTable(source, null, tableName, handle);
 		handle.conn.close();
 		
