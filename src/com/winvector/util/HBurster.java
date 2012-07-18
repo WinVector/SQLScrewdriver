@@ -1,7 +1,6 @@
 package com.winvector.util;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -69,7 +68,7 @@ public final class HBurster implements LineBurster {
 	
 	@Override
 	public BurstMap parse(final String s) {
-		final Map<String,Object> mp = new LinkedHashMap<String,Object>();
+		final Map<String,Object> mp = new HashMap<String,Object>();
 		if((s!=null)&&(!s.equalsIgnoreCase(origHeader))) {
 			final String[] flds = s.split(sep);
 			final int n = Math.min(headerFlds.length,flds.length);

@@ -288,8 +288,8 @@ public class LoadTable {
 								stmtA.setLong(i+1,asLong);
 							}
 						} else if(isNumeric[i]) {	
-							final Double asDouble = row.getAsDouble(k);
-							if(asDouble==null) {
+							final double asDouble = row.getAsDouble(k);
+							if(Double.isNaN(asDouble)) {
 								stmtA.setNull(i+1,columnTypeCode[i]);
 							} else {
 								stmtA.setDouble(i+1,asDouble);

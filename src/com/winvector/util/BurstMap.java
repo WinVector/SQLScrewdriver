@@ -45,22 +45,22 @@ public final class BurstMap {
 		return false;
 	}
 	
-	public Double getAsDouble(final String key) {
+	public double getAsDouble(final String key) {
 		final Object v = burst.get(key);
 		if(v==null) {
-			return null;
+			return Double.NaN;
 		}
 		if(v instanceof Number) {
 			return ((Number)v).doubleValue();
 		}
 		final String vstr = v.toString();
 		if(missingValue(vstr)) {
-			return null;
+			return Double.NaN;
 		}
 		try {
 			return Double.parseDouble(vstr.trim());
 		} catch (Exception ex) {
-			return null;
+			return Double.NaN;
 		}
 	}
 	
