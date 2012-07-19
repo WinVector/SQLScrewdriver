@@ -53,7 +53,12 @@ public final class BurstMap {
 		if(v instanceof Number) {
 			return ((Number)v).doubleValue();
 		}
-		final String vstr = v.toString();
+		final String vstr;
+		if(v instanceof String) {
+			vstr = (String)v;
+		} else {
+			vstr = v.toString();
+		}
 		if(missingValue(vstr)) {
 			return Double.NaN;
 		}
@@ -72,7 +77,12 @@ public final class BurstMap {
 		if(v instanceof Number) {
 			return ((Number)v).longValue();
 		}
-		final String vstr = v.toString();
+		final String vstr;
+		if(v instanceof String) {
+			vstr = (String)v;
+		} else {
+			vstr = v.toString();
+		}
 		if(missingValue(vstr)) {
 			return null;
 		}
