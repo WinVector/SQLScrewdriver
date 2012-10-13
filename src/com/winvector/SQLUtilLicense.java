@@ -1,6 +1,6 @@
 package com.winvector;
 
-public class Licenses {
+public class SQLUtilLicense {
 	public static final String licenses =
 		"\n" +
 	   "[\n" +
@@ -8,7 +8,7 @@ public class Licenses {
 	   "Licenses\n" + 
 	   "\n" +
 	   " Packages com.winvector.*\n" +
-	   "  Code for performing logistic regression on Hadoop.\n" +
+	   " Example code for moving data in out out of DBs.\n" +
 	   "  Copyright (C) Win Vector LLC 2010 (contact: John Mount jmount@win-vector.com).\n" +
 	   "  Distributed under GNU Affero General Public License version 3 (2007, see http://www.gnu.org/licenses/agpl.html ).\n" +
 	   "    This program is free software: you can redistribute it and/or modify\n" +
