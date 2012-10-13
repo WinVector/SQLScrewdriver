@@ -69,11 +69,15 @@ public final class HBurster implements LineBurster {
 	@Override
 	public BurstMap parse(final String s) {
 		final Map<String,Object> mp = new HashMap<String,Object>();
-		if((s!=null)&&(!s.equalsIgnoreCase(origHeader))) {
+		if((s!=null)&&(s.length()>0)&&(!s.equalsIgnoreCase(origHeader))) {
 			final String[] flds = s.split(sep);
-			final int n = Math.min(headerFlds.length,flds.length);
-			for(int i=0;i<n;++i) {
-				mp.put(headerFlds[i],intern(flds[i],interner));
+			if(null!=flds) {
+				final int n = Math.min(headerFlds.length,flds.length);
+				if((n>0)||(flds[0].trim().length()>0)) { // empty string falsely looks like first field filled in with blank
+					for(int i=0;i<n;++i) {
+						mp.put(headerFlds[i],intern(flds[i],interner));
+					}
+				}
 			}
 		}
 		return new BurstMap(s,mp);
