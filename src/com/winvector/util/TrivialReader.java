@@ -12,9 +12,8 @@ import java.io.PrintStream;
 import java.io.Reader;
 import java.net.URI;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.TreeMap;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -32,7 +31,7 @@ public class TrivialReader implements Iterable<BurstMap> {
 	public final boolean allowPartials;
 	public final ErrorPolicy<String,String[]> errorPolicy;
 	private final boolean intern;
-	private String escapedSep;
+	private final Pattern sepPattern;
 
 	
 	
@@ -57,22 +56,30 @@ public class TrivialReader implements Iterable<BurstMap> {
 		}
 		p.println();
 	}
-	
-	public TrivialReader(final URI srcURI, final char sep, final String encoding, final boolean allowPartials, final ErrorPolicy<String,String[]> errorPolicy, 
+
+	public TrivialReader(final URI srcURI, final Pattern sepPattern, final String encoding, final boolean allowPartials, final ErrorPolicy<String,String[]> errorPolicy, 
 			final boolean intern) {
 		this.srcURI = srcURI;
 		this.encoding = encoding;
 		this.allowPartials = allowPartials;
 		this.errorPolicy = errorPolicy;
 		this.intern = intern;
-		Map<Character,String> escapes = new TreeMap<Character,String>();
-		escapes.put('|',"\\|"); // TODO: add more of these
-		escapes.put('t',"\\t"); // TODO: add more of these
-		escapedSep = escapes.get(sep);
-		if(escapedSep==null) {
-			escapedSep = "" + sep;
+		this.sepPattern = sepPattern;
+	}
+	
+	public static Pattern buildPattern(final char sep) {
+		switch(sep) {
+			case '|': return Pattern.compile("\\|");
+			case 't': return Pattern.compile("\\t");
+			default: return Pattern.compile("" + sep);
 		}
 	}
+
+	public TrivialReader(final URI srcURI, final char sep, final String encoding, final boolean allowPartials, final ErrorPolicy<String,String[]> errorPolicy, 
+			final boolean intern) {
+		this(srcURI,buildPattern(sep),encoding,allowPartials,errorPolicy,intern); 
+	}
+	
 
 	public static final String GZSUFFIX = ".gz";
 	public static LineNumberReader openBufferedReader(final URI uriSrc, final String encoding) throws IOException {
@@ -109,7 +116,7 @@ public class TrivialReader implements Iterable<BurstMap> {
 		private final LineBurster burster;
 		private final String comment;
 		
-		public TrivialIterator(final LineNumberReader reader, final String escapedSep, final boolean allowPartials, final boolean intern, final String comment) throws IOException {
+		public TrivialIterator(final LineNumberReader reader, final Pattern sepPattern, final boolean allowPartials, final boolean intern, final String comment) throws IOException {
 			this.reader = reader;
 			this.comment = comment;
 			this.allowPartials = allowPartials;
@@ -117,7 +124,7 @@ public class TrivialReader implements Iterable<BurstMap> {
 			if(header==null) {
 				burster = null;
 			} else {
-				burster = new HBurster(escapedSep,header,intern);
+				burster = new HBurster(sepPattern,header,intern);
 				advance();  // get first row into next
 			}
 		}
@@ -202,7 +209,7 @@ public class TrivialReader implements Iterable<BurstMap> {
 	@Override
 	public TrivialIterator iterator() {
 		try {
-			return new TrivialIterator(openBufferedReader(srcURI,encoding),escapedSep,allowPartials,intern,srcURI.toString());
+			return new TrivialIterator(openBufferedReader(srcURI,encoding),sepPattern,allowPartials,intern,srcURI.toString());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

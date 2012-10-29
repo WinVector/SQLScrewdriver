@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * Reads lines given a header hint. Skips lines that look like the header.
@@ -15,19 +16,23 @@ public final class HBurster implements LineBurster {
 	private static final long serialVersionUID = 1L;
 	
 	private final Map<String,String> interner;
-	private final String sep;
+	private final Pattern sepPattern;
 	private final String origHeader;
 	private final String[] headerFlds;
 	
-	public HBurster(final String sep, final String origHeader,  final boolean intern) {
-		this.sep = sep;
+	public HBurster(final Pattern sepPattern, final String origHeader,  final boolean intern) {
+		this.sepPattern = sepPattern;
 		this.origHeader = origHeader;
 		if(intern) {
 			interner = new HashMap<String,String>();
 		} else {
 			interner = null;
 		}
-		headerFlds = buildHeaderFlds(origHeader.split(sep),interner);
+		headerFlds = buildHeaderFlds(sepPattern.split(origHeader),interner); // don't allow trailing nulls in header
+	}
+	
+	public HBurster(final char sep, final String origHeader,  final boolean intern) {
+		this(TrivialReader.buildPattern(sep),origHeader,intern);
 	}
 	
 	private static String intern(final String s,  final Map<String,String> interner) {
@@ -70,10 +75,10 @@ public final class HBurster implements LineBurster {
 	public BurstMap parse(final String s) {
 		final Map<String,Object> mp = new HashMap<String,Object>();
 		if((s!=null)&&(s.length()>0)&&(!s.equalsIgnoreCase(origHeader))) {
-			final String[] flds = s.split(sep);
+			final String[] flds = sepPattern.split(s,-1); // do allow trailing nulls
 			if(null!=flds) {
-				final int n = Math.min(headerFlds.length,flds.length);
-				if((n>0)||(flds[0].trim().length()>0)) { // empty string falsely looks like first field filled in with blank
+				if((flds.length>0)||(flds[0].trim().length()>0)) { // empty string falsely looks like first field filled in with blank
+					final int n = Math.min(headerFlds.length,flds.length);
 					for(int i=0;i<n;++i) {
 						mp.put(headerFlds[i],intern(flds[i],interner));
 					}
