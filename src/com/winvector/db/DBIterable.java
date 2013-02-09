@@ -4,12 +4,11 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.TreeMap;
 
 import com.winvector.db.DBUtil.DBHandle;
 import com.winvector.util.BurstMap;
@@ -19,13 +18,6 @@ import com.winvector.util.HBurster;
 public final class DBIterable implements Iterable<BurstMap> {
 	private Statement stmt;
 	private final String query;
-	
-	private static final Comparator<String> ignoreCase = new Comparator<String>() {
-		@Override
-		public int compare(final String arg0, final String arg1) {
-			return arg0.compareToIgnoreCase(arg1);
-		}
-	};
 	
 	public DBIterable(final Statement stmt, final String query) {
 		this.stmt = stmt;
@@ -92,7 +84,7 @@ public final class DBIterable implements Iterable<BurstMap> {
 			if(rs!=null) {
 				try {
 					int n = colNames.length;
-					final Map<String,Object> mp = new TreeMap<String,Object>(ignoreCase);
+					final Map<String,Object> mp = new LinkedHashMap<String,Object>();
 					for(int i=0;i<n;++i) {
 						switch(colTypes[i]) {
 						case java.sql.Types.DATE:
