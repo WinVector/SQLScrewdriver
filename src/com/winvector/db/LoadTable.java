@@ -21,7 +21,8 @@ import com.winvector.util.TrivialReader;
 
 
 public class LoadTable {
-	private final static String colQuote = "\"";
+	private static final String colQuote = "\"";
+	private static final String rowNumCol = "ORIGFILEROWNUMBER";
 	
 	public static void main(final String[] args) throws Exception {
 		final URI propsURI = new URI(args[0]);
@@ -51,7 +52,7 @@ public class LoadTable {
 		final String[] keywords = { // no longer quoting out columns, user will need to quote columns
 		};
 		for(final String kw: keywords) {
-			invalidColumnNames.add(kw.toLowerCase());
+			invalidColumnNames.add(kw.toUpperCase());
 		}
 	}
 	
@@ -60,20 +61,20 @@ public class LoadTable {
 	}
 	
 	public static String plumpColumnName(final String kin, final Set<String> seen) {
-		String k = kin;
+		String k = kin.toUpperCase();
 		final int colonIndex = k.indexOf(':');
 		if(colonIndex>0) { 		// get rid of any trailing : type info
 			k = k.substring(0,colonIndex);
 		}		
 		k = stompMarks(k).replaceAll("\\W+"," ").trim().replaceAll("\\s+","_");
-		if((k.length()<=0)||invalidColumnNames.contains(k.toLowerCase())||(!Character.isLetter(k.charAt(0)))) {
+		if((k.length()<=0)||invalidColumnNames.contains(k.toUpperCase())||(!Character.isLetter(k.charAt(0)))) {
 			k = columnPrefix + k;
 		}
-		if(seen.contains(k.toLowerCase())) {
+		if(seen.contains(k.toUpperCase())) {
 			int i = 2;
 			while(true) {
 				String kt = k + "_" + i;
-				if(!seen.contains(kt.toLowerCase())) {
+				if(!seen.contains(kt.toUpperCase())) {
 					k = kt;
 					break;
 				} else {
@@ -81,7 +82,7 @@ public class LoadTable {
 				}
 			}
 		}
-		seen.add(k.toLowerCase());
+		seen.add(k.toUpperCase());
 		return k;
 	}
 	
@@ -90,7 +91,7 @@ public class LoadTable {
 	public static void loadTable(final Iterable<BurstMap> source, final RowCritique gateKeeper,
 			final String tableName, final DBHandle handle) throws SQLException {
 		// scan once to get field names and sizes and types
-		final Pattern doubleRegexp = Pattern.compile("[-+]?[0-9]*\\.?[0-9]*([eE][-+]?[0-9]+)?"); // TODO: add missig values and Nan
+		final Pattern doubleRegexp = Pattern.compile("[-+]?[0-9]*\\.?[0-9]*([eE][-+]?[0-9]+)?"); // TODO: add missibg values and Nan
 		final Pattern intRegexp = Pattern.compile("[-+]?[0-9]+");
 		final ArrayList<String> keys = new ArrayList<String>();
 		boolean[] isInt = null;
@@ -99,6 +100,7 @@ public class LoadTable {
 		for(final BurstMap row: source) {
 			if((gateKeeper==null)||(gateKeeper.accept(row))) {
 				if(keys.isEmpty()) {
+					keys.add(rowNumCol);
 					keys.addAll(row.keySet());
 					sizes = new int[keys.size()];
 					isInt = new boolean[keys.size()];
@@ -109,20 +111,22 @@ public class LoadTable {
 				}
 				int i = 0;
 				for(final String k: keys) {
-					String v = row.getAsString(k);
-					if(v!=null) {
-						v = v.trim();
-						final int vlength = v.length();
-						if((vlength>0)&&(!BurstMap.missingValue(v))) {
-							sizes[i] = Math.max(sizes[i],vlength+1);
-							if(isNumeric[i]) {
-								if((vlength>38)||(!doubleRegexp.matcher(v).matches())) {
-									isNumeric[i] = false;
+					if(!k.equalsIgnoreCase(rowNumCol)) {
+						String v = row.getAsString(k);
+						if(v!=null) {
+							v = v.trim();
+							final int vlength = v.length();
+							if((vlength>0)&&(!BurstMap.missingValue(v))) {
+								sizes[i] = Math.max(sizes[i],vlength+1);
+								if(isNumeric[i]) {
+									if((vlength>38)||(!doubleRegexp.matcher(v).matches())) {
+										isNumeric[i] = false;
+									}
 								}
-							}
-							if(isInt[i]) {
-								if((vlength>40)||(!intRegexp.matcher(v).matches())) {
-									isInt[i] = false;
+								if(isInt[i]) {
+									if((vlength>40)||(!intRegexp.matcher(v).matches())) {
+										isInt[i] = false;
+									}
 								}
 							}
 						}
@@ -210,26 +214,30 @@ public class LoadTable {
 				if((gateKeeper==null)||(gateKeeper.accept(row))) {
 					int i = 0;
 					for(final String k: keys) {
-						if(isInt[i]) {
-							final Long asLong = row.getAsLong(k);
-							if(asLong==null) {
-								stmtA.setNull(i+1,columnTypeCode[i]);
-							} else {
-								stmtA.setLong(i+1,asLong);
-							}
-						} else if(isNumeric[i]) {	
-							final double asDouble = row.getAsDouble(k);
-							if(Double.isNaN(asDouble)) {
-								stmtA.setNull(i+1,columnTypeCode[i]);
-							} else {
-								stmtA.setDouble(i+1,asDouble);
-							}
+						if(rowNumCol.equalsIgnoreCase(k)) {
+							stmtA.setLong(i+1,nInserted+1);
 						} else {
-							final String asString = row.getAsString(k);
-							if(asString==null) {
-								stmtA.setNull(i+1,columnTypeCode[i]);
+							if(isInt[i]) {
+								final Long asLong = row.getAsLong(k);
+								if(asLong==null) {
+									stmtA.setNull(i+1,columnTypeCode[i]);
+								} else {
+									stmtA.setLong(i+1,asLong);
+								}
+							} else if(isNumeric[i]) {	
+								final double asDouble = row.getAsDouble(k);
+								if(Double.isNaN(asDouble)) {
+									stmtA.setNull(i+1,columnTypeCode[i]);
+								} else {
+									stmtA.setDouble(i+1,asDouble);
+								}
 							} else {
-								stmtA.setString(i+1,asString);
+								final String asString = row.getAsString(k);
+								if(asString==null) {
+									stmtA.setNull(i+1,columnTypeCode[i]);
+								} else {
+									stmtA.setString(i+1,asString);
+								}
 							}
 						}
 						++i;
