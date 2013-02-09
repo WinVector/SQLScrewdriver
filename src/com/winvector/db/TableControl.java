@@ -1,0 +1,283 @@
+package com.winvector.db;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.winvector.db.DBUtil.DBHandle;
+import com.winvector.util.BurstMap;
+import com.winvector.util.RowCritique;
+
+public final class TableControl {
+	private static final String colQuote = "\"";
+	private static final String rowNumCol = "ORIGFILEROWNUMBER";
+
+	private final String tableName;
+	private final ArrayList<String> keys = new ArrayList<String>();
+	private boolean[] isInt = null;
+	private boolean[] isNumeric = null;
+	private int[] sizes = null;
+
+	private String createStatement = null;
+	private String insertStatement = null;
+	private String selectStatement = null;
+	
+	private int[] columnTypeCode = null;
+	private String[] columnClassName = null;
+
+	
+	public TableControl(final String tableName) {
+		this.tableName = tableName;
+	}
+	
+	public static boolean couldBeDouble(final String v) {
+		if(null==v) {
+			return false;
+		}
+		final int len = v.length();
+		if(len<=0) {
+			return true;
+		}
+		if(len>40) {
+			return false;
+		}
+		if(BurstMap.missingDoubleValue(v)) {
+			return true;
+		}
+		if(v.equalsIgnoreCase(BurstMap.doublePosInfString)||v.equalsIgnoreCase(BurstMap.doubleNegInfString)) {
+			return true;
+		}
+		try {
+			Double.parseDouble(v);
+			return true;
+		} catch (NumberFormatException ex) {
+		}
+		return false;
+	}
+
+	public static boolean couldBeInt(final String v) {
+		if(null==v) {
+			return false;
+		}
+		final int len = v.length();
+		if((len<0)||(len>20)) {
+			return false;
+		}
+		try {
+			Integer.parseInt(v);
+			return true;
+		} catch (NumberFormatException ex) {
+		}
+		return false;
+	}
+	
+	public void scanForDefs(final Iterable<BurstMap> source, final RowCritique gateKeeper) throws SQLException {
+		// scan once to get field names and sizes and types
+		for(final BurstMap row: source) {
+			if((gateKeeper==null)||(gateKeeper.accept(row))) {
+				if(keys.isEmpty()) {
+					keys.add(rowNumCol);
+					keys.addAll(row.keySet());
+					sizes = new int[keys.size()];
+					isInt = new boolean[keys.size()];
+					isNumeric = new boolean[keys.size()];
+					Arrays.fill(sizes,1);
+					Arrays.fill(isInt,true);
+					Arrays.fill(isNumeric,true);
+				}
+				int i = 0;
+				for(final String k: keys) {
+					if(!k.equalsIgnoreCase(rowNumCol)) {
+						String v = row.getAsString(k);
+						if(v!=null) {
+							v = v.trim();
+							final int vlength = v.length();
+							if((vlength>0)&&(!BurstMap.missingDoubleValue(v))) {
+								sizes[i] = Math.max(sizes[i],vlength+1);
+								if(isNumeric[i]) {
+									if(!couldBeDouble(v)) {
+										isNumeric[i] = false;
+									}
+								}
+								if(isInt[i]) {
+									if(!couldBeInt(v)) {
+										isInt[i] = false;
+									}
+								}
+							}
+						}
+					}
+					++i;
+				}
+			}
+		}
+	}
+	
+	private static String stompMarks(final String s) {
+		return java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+",""); // from: http://stackoverflow.com/questions/285228/how-to-convert-utf-8-to-us-ascii-in-java
+	}
+	
+	
+	public static final Set<String> invalidColumnNames = new HashSet<String>();
+	public static final String columnPrefix = "x";
+	static {
+		final String[] keywords = { // no longer quoting out columns, user will need to quote columns
+		};
+		for(final String kw: keywords) {
+			invalidColumnNames.add(kw.toUpperCase());
+		}
+	}
+	
+	public static String plumpColumnName(final String kin, final Set<String> seen) {
+		String k = kin.toUpperCase();
+		final int colonIndex = k.indexOf(':');
+		if(colonIndex>0) { 		// get rid of any trailing : type info
+			k = k.substring(0,colonIndex);
+		}		
+		k = stompMarks(k).replaceAll("\\W+"," ").trim().replaceAll("\\s+","_");
+		if((k.length()<=0)||invalidColumnNames.contains(k.toUpperCase())||(!Character.isLetter(k.charAt(0)))) {
+			k = columnPrefix + k;
+		}
+		if(seen.contains(k.toUpperCase())) {
+			int i = 2;
+			while(true) {
+				String kt = k + "_" + i;
+				if(!seen.contains(kt.toUpperCase())) {
+					k = kt;
+					break;
+				} else {
+					++i;
+				}
+			}
+		}
+		seen.add(k.toUpperCase());
+		return k;
+	}
+	
+	
+	public void buildSQLStatements() {
+		final Set<String> seenColNames = new HashSet<String>();
+		final StringBuilder createBuilder = new StringBuilder();
+		createBuilder.append("CREATE TABLE " + tableName + " (");
+		final StringBuilder insertBuilder = new StringBuilder();
+		insertBuilder.append("INSERT INTO " + tableName + " (");
+		final StringBuilder selectBuilder = new StringBuilder();
+		selectBuilder.append("SELECT ");
+		{
+			int i = 0;
+			for(final String k: keys) {
+				if(i>0) {
+					createBuilder.append(",");
+					insertBuilder.append(",");
+					selectBuilder.append(",");
+				}
+				final String colName = plumpColumnName(k,seenColNames);
+				if(isInt[i]) {
+					createBuilder.append(" " + colQuote + colName  + colQuote + " BIGINT");
+				} else if(isNumeric[i]) {
+					createBuilder.append(" " + colQuote + colName + colQuote + " DOUBLE PRECISION");
+				} else {
+					createBuilder.append(" " + colQuote + colName + colQuote + " VARCHAR(" + sizes[i] + ")");
+				}
+				insertBuilder.append(" " + colQuote + colName + colQuote);
+				selectBuilder.append(" " + colQuote + colName + colQuote);
+				++i;
+			}
+		}
+		createBuilder.append(" )");
+		insertBuilder.append(" ) VALUES (");
+		selectBuilder.append(" FROM " + tableName);
+		for(int i=0;i<sizes.length;++i) {
+			if(i>0) {
+				insertBuilder.append(",");
+			}
+			insertBuilder.append(" ?");
+		}
+		insertBuilder.append(" )");			
+		createStatement = createBuilder.toString();
+		insertStatement = insertBuilder.toString();
+		selectStatement = selectBuilder.toString();
+	}
+	
+	public void createTable(final DBHandle handle) throws SQLException {
+		// set up table
+		final Statement stmt = handle.conn.createStatement();
+		try {
+			final String dropStatement = "DROP TABLE " + tableName;
+			System.out.println("\texecuting: " + dropStatement);
+			stmt.executeUpdate(dropStatement);
+		} catch (Exception ex) {
+		}
+		System.out.println("\texecuting: " + createStatement);
+		stmt.executeUpdate(createStatement);
+		// get type codes back
+		final ResultSet rs = stmt.executeQuery(selectStatement);
+		final ResultSetMetaData rsm = rs.getMetaData();
+		columnTypeCode = new int[sizes.length];
+		columnClassName = new String[sizes.length];
+		for(int i=0;i<sizes.length;++i) {
+			columnTypeCode[i] = rsm.getColumnType(i+1);
+			columnClassName[i] = rsm.getColumnClassName(i+1);
+		}
+		rs.close();
+		stmt.close();			
+	}
+	
+	public long loadData(final Iterable<BurstMap> source, final RowCritique gateKeeper,
+			final DBHandle handle) throws SQLException {
+		// scan again and populate
+		System.out.println("\texecuting: " + insertStatement);
+		final PreparedStatement stmtA = handle.conn.prepareStatement(insertStatement);
+		long reportTarget = 1000;
+		long nInserted = 0;
+		for(final BurstMap row: source) {
+			if((gateKeeper==null)||(gateKeeper.accept(row))) {
+				int i = 0;
+				for(final String k: keys) {
+					if(rowNumCol.equalsIgnoreCase(k)) {
+						stmtA.setLong(i+1,nInserted+1);
+					} else {
+						if(isInt[i]) {
+							final Long asLong = row.getAsLong(k);
+							if(asLong==null) {
+								stmtA.setNull(i+1,columnTypeCode[i]);
+							} else {
+								stmtA.setLong(i+1,asLong);
+							}
+						} else if(isNumeric[i]) {	
+							final double asDouble = row.getAsDouble(k);
+							if(Double.isNaN(asDouble)) {
+								stmtA.setNull(i+1,columnTypeCode[i]);
+							} else {
+								stmtA.setDouble(i+1,asDouble);
+							}
+						} else {
+							final String asString = row.getAsString(k);
+							if(asString==null) {
+								stmtA.setNull(i+1,columnTypeCode[i]);
+							} else {
+								stmtA.setString(i+1,asString);
+							}
+						}
+					}
+					++i;
+				}
+				stmtA.executeUpdate();
+				++nInserted;
+				if(nInserted>=reportTarget) {
+					System.out.println("\twrote " + nInserted + "\t" + new Date());
+					reportTarget *= 2;
+				}
+			}
+		}
+		stmtA.close();
+		return nInserted;
+	}
+}
