@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import com.winvector.db.DBUtil.DBHandle;
@@ -22,6 +21,8 @@ import com.winvector.util.TrivialReader;
 
 
 public class LoadTable {
+	private final static String colQuote = "\"";
+	
 	public static void main(final String[] args) throws Exception {
 		final URI propsURI = new URI(args[0]);
 		final char sep = args[1].charAt(0);
@@ -44,81 +45,10 @@ public class LoadTable {
 		System.out.println("done LoadTable\t" + new Date());
 	}
 
-	public static final Set<String> invalidColumnNames = new TreeSet<String>();
+	public static final Set<String> invalidColumnNames = new HashSet<String>();
 	public static final String columnPrefix = "x";
 	static {
-		final String[] keywords = {
-				"ABS", "ABSOLUTE", "ACOS", "ACTION", "ADA", "ADD", "ADMIN",
-				"AFTER", "AGGREGATE", "ALIAS", "ALL", "ALLOCATE", "ALTER", "AND",
-				"ANY", "APP", "ARE", "ARRAY", "AS", "ASC", "ASIN", "ASSERTION", "AT",
-				"ATAN", "ATAN2", "AUTHORIZATION", "AVG", "BACKUP", "BEFORE", "BEGIN",
-				"BETWEEN", "BIGINT", "BINARY", "BIT", "BIT_LENGTH", "BLOB", "BOOLEAN",
-				"BOTH", "BREADTH", "BREAK", "BROWSE", "BULK", "BY", "CALL", "CASCADE",
-				"CASCADED", "CASE", "CAST", "CATALOG", "CEILING", "CHAR", "CHARACTER",
-				"CHARACTER_LENGTH", "CHAR_LENGTH", "CHECK", "CHECKPOINT", "CLASS",
-				"CLOB", "CLOSE", "CLUSTERED", "COALESCE", "COLLATE", "COLLATION",
-				"COLUMN", "COMMIT", "COMPLETION", "COMPUTE", "CONCAT", "CONNECT",
-				"CONNECTION", "CONSTRAINT", "CONSTRAINTS", "CONSTRUCTOR", "CONTAINS",
-				"CONTAINSTABLE", "CONTINUE", "CONVERT", "COPY", "CORRESPONDING",
-				"COS", "COT", "COUNT", "CREATE", "CROSS", "CUBE", "CURRENT",
-				"CURRENT_DATE", "CURRENT_PATH", "CURRENT_ROLE", "CURRENT_TIME",
-				"CURRENT_TIMESTAMP", "CURRENT_USER", "CURSOR", "CYCLE", "DATA",
-				"DATABASE", "DATE", "DAY", "DB2J_DEBUG", "DBCC", "DEALLOCATE", "DEC",
-				"DECIMAL", "DECLARE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DEGREES",
-				"DELETE", "DENY", "DEPTH", "DEREF", "DESC", "DESCRIBE", "DESCRIPTOR",
-				"DESTROY", "DESTRUCTOR", "DETERMINISTIC", "DIAGNOSTICS", "DICTIONARY",
-				"DISCONNECT", "DISK", "DISTINCT", "DISTRIBUTED", "DOMAIN", "DOUBLE",
-				"DROP", "DUMMY", "DUMP", "DYNAMIC", "EACH", "ELSE", "END", "END-EXEC",
-				"EQUALS", "ERRLVL", "ESCAPE", "EVERY", "EXCEPT", "EXCEPTION", "EXEC",
-				"EXECUTE", "EXISTS", "EXIT", "EXP", "EXPLAIN", "EXTERNAL", "EXTRACT",
-				"FALSE", "FETCH", "FILE", "FILLFACTOR", "FILTER", "FIRST", "FLOAT",
-				"FLOOR", "FOR", "FOREIGN", "FORTRAN", "FOUND", "FREE", "FREETEXT",
-				"FREETEXTTABLE", "FROM", "FULL", "FUNCTION", "GENERAL", "GET",
-				"GETCURRENTCONNECTION", "GLOBAL", "GO", "GOTO", "GRANT", "GROUP",
-				"GROUPING", "HAVING", "HOLDLOCK", "HOST", "HOUR", "IDENTITY",
-				"IDENTITYCOL", "IDENTITY_INSERT", "IF", "IGNORE", "IMMEDIATE", "IN",
-				"INCLUDE", "INDEX", "INDICATOR", "INITIALIZE", "INITIALLY", "INNER",
-				"INOUT", "INPUT", "INSENSITIVE", "INSERT", "INSTANCEOF", "INT",
-				"INTEGER", "INTERSECT", "INTERVAL", "INTO", "IS", "ISOLATION",
-				"ITERATE", "JOIN", "KEY", "KILL", "LANGUAGE", "LARGE", "LAST",
-				"LATERAL", "LCASE", "LEADING", "LEFT", "LENGTH", "LESS", /*"LEVEL",*/
-				"LIKE", "LIMIT", "LINENO", "LOAD", "LOCAL", "LOCALTIME",
-				"LOCALTIMESTAMP", "LOCATE", "LOCATOR", "LOG", "LOG10", "LONG",
-				"LOWER", "LTRIM", "MAP", "MATCH", "MAX", "METHOD", "MIN", "MINUTE",
-				"MOD", "MODIFIES", "MODIFY", "MODULE", "MONTH", "NAMES", "NATIONAL",
-				"NATURAL", "NCHAR", "NCLOB", "NEW", "NEXT", "NO", "NOCHECK",
-				"NONCLUSTERED", "NONE", "NOT", "NULL", "NULLID", "NULLIF", "NUMERIC",
-				"OBJECT", "OCTET_LENGTH", "OF", "OFF", "OFFSETS", "OLD", "ON", "ONLY",
-				"OPEN", "OPENDATASOURCE", "OPENQUERY", "OPENROWSET", "OPENXML",
-				"OPERATION", "OPTION", "OR", "ORDER", "ORDINALITY", "OUT", "OUTER",
-				"OUTPUT", "OVER", "OVERLAPS", "PAD", "PARAMETER", "PARAMETERS",
-				"PARTIAL", "PASCAL", "PATH", "PERCENT", "PI", "PLAN", "POSITION",
-				"POSTFIX", "PRECISION", "PREFIX", "PREORDER", "PREPARE", "PRESERVE",
-				"PRIMARY", "PRINT", "PRIOR", "PRIVILEGES", "PROC", "PROCEDURE",
-				"PROPERTIES", "PUBLIC", "RADIANS", "RAISERROR", "RAND", "READ",
-				"READS", "READTEXT", "REAL", "RECOMPILE", "RECONFIGURE", "RECURSIVE",
-				"REF", "REFERENCES", "REFERENCING", "RELATIVE", "RENAME",
-				"REPLICATION", "RESTORE", "RESTRICT", "RESULT", "RETURN", "RETURNS",
-				"REVOKE", "RIGHT", "ROLE", "ROLLBACK", "ROLLUP", "ROUTINE", "ROW",
-				"ROWCOUNT", "ROWGUIDCOL", "ROWS", "RTRIM", "RULE",
-				"RUNTIMESTATISTICS", "SAVE", "SAVEPOINT", "SCHEMA", "SCOPE", "SCROLL",
-				"SEARCH", "SECOND", "SECTION", "SELECT", "SEQUENCE", "SESSION",
-				"SESSION_USER", "SET", "SETS", "SETUSER", "SHUTDOWN", "SIGN", "SIN",
-				"SIZE", "SMALLINT", "SOME", "SPACE", "SPECIFIC", "SPECIFICTYPE",
-				"SQL", "SQLCA", "SQLCODE", "SQLERROR", "SQLEXCEPTION", "SQLJ",
-				"SQLSTATE", "SQLWARNING", "SQRT", "START", "STATE", "STATEMENT",
-				"STATIC", "STATISTICS", "STRUCTURE", "SUBSTRING", "SUM", "SYNONYM",
-				"SYS", "SYSCAT", "SYSCS_DIAG", "SYSCS_UTIL", "SYSFUN", "SYSIBM",
-				"SYSPROC", "SYSSTAT", "SYSTEM", "SYSTEM_USER", "TABLE", "TAN",
-				"TEMPORARY", "TERMINATE", "TEXTSIZE", "THAN", "THEN", "TIME",
-				"TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE", "TIMING", "TO",
-				"TOP", "TRAILING", "TRAN", "TRANSACTION", "TRANSLATE", "TRANSLATION",
-				"TREAT", "TRIGGER", "TRIM", "TRUE", "TRUNCATE", "TSEQUAL", "UCASE",
-				"UNDER", "UNION", "UNIQUE", "UNKNOWN", "UNNEST", "UPDATE",
-				"UPDATETEXT", "UPPER", "USAGE", "USE", "USER", "USING", /*"VALUE",*/
-				"VALUES", "VARCHAR", /*"VARIABLE",*/ "VARYING", "VIEW", "WAIT", "WAITFOR",
-				"WHEN", "WHENEVER", "WHERE", "WHILE", "WITH", "WITHOUT", "WORK",
-				"WRITE", "WRITETEXT", "XML", "YEAR", "ZONE", ""
+		final String[] keywords = { // no longer quoting out columns, user will need to quote columns
 		};
 		for(final String kw: keywords) {
 			invalidColumnNames.add(kw.toLowerCase());
@@ -223,14 +153,14 @@ public class LoadTable {
 					}
 					final String colName = plumpColumnName(k,seenColNames);
 					if(isInt[i]) {
-						createBuilder.append(" " + colName + " BIGINT");
+						createBuilder.append(" " + colQuote + colName  + colQuote + " BIGINT");
 					} else if(isNumeric[i]) {
-						createBuilder.append(" " + colName + " DOUBLE PRECISION");
+						createBuilder.append(" " + colQuote + colName + colQuote + " DOUBLE PRECISION");
 					} else {
-						createBuilder.append(" " + colName + " VARCHAR(" + sizes[i] + ")");
+						createBuilder.append(" " + colQuote + colName + colQuote + " VARCHAR(" + sizes[i] + ")");
 					}
-					insertBuilder.append(" " + colName);
-					selectBuilder.append(" " + colName);
+					insertBuilder.append(" " + colQuote + colName + colQuote);
+					selectBuilder.append(" " + colQuote + colName + colQuote);
 					++i;
 				}
 			}
