@@ -5,10 +5,12 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.winvector.db.DBUtil.DBHandle;
@@ -18,6 +20,12 @@ import com.winvector.util.RowCritique;
 public final class TableControl {
 	private static final String colQuote = "\"";
 	private static final String rowNumCol = "ORIGFILEROWNUMBER";
+	private static final String fileNameCol = "ORIGFILENAME";
+	private static final String insertTimeCol = "ORIGINSERTTIME";
+	private static Set<String> predefKeys = new LinkedHashSet<String>(Arrays.asList(new String[] {
+			rowNumCol, fileNameCol, insertTimeCol
+		}));
+	private static final int fNameColNum = 1;
 
 	private final String tableName;
 	private final ArrayList<String> keys = new ArrayList<String>();
@@ -78,12 +86,15 @@ public final class TableControl {
 		return false;
 	}
 	
-	public void scanForDefs(final Iterable<BurstMap> source, final RowCritique gateKeeper) throws SQLException {
+	public void scanForDefs(final String fileName,
+			final Iterable<BurstMap> source, final RowCritique gateKeeper) throws SQLException {
 		// scan once to get field names and sizes and types
 		for(final BurstMap row: source) {
 			if((gateKeeper==null)||(gateKeeper.accept(row))) {
 				if(keys.isEmpty()) {
-					keys.add(rowNumCol);
+					for(final String pc: predefKeys) {
+						keys.add(pc);
+					}
 					keys.addAll(row.keySet());
 					sizes = new int[keys.size()];
 					isInt = new boolean[keys.size()];
@@ -94,13 +105,13 @@ public final class TableControl {
 				}
 				int i = 0;
 				for(final String k: keys) {
-					if(!k.equalsIgnoreCase(rowNumCol)) {
+					if(!predefKeys.contains(k)) {
 						String v = row.getAsString(k);
 						if(v!=null) {
 							v = v.trim();
 							final int vlength = v.length();
+							sizes[i] = Math.max(sizes[i],vlength+1);
 							if((vlength>0)&&(!BurstMap.missingDoubleValue(v))) {
-								sizes[i] = Math.max(sizes[i],vlength+1);
 								if(isNumeric[i]) {
 									if(!couldBeDouble(v)) {
 										isNumeric[i] = false;
@@ -118,6 +129,7 @@ public final class TableControl {
 				}
 			}
 		}
+		sizes[fNameColNum] = Math.max(sizes[fNameColNum],fileName.length()+1);
 	}
 	
 	private static String stompMarks(final String s) {
@@ -179,12 +191,22 @@ public final class TableControl {
 					selectBuilder.append(",");
 				}
 				final String colName = plumpColumnName(k,seenColNames);
-				if(isInt[i]) {
-					createBuilder.append(" " + colQuote + colName  + colQuote + " BIGINT");
-				} else if(isNumeric[i]) {
-					createBuilder.append(" " + colQuote + colName + colQuote + " DOUBLE PRECISION");
+				if(predefKeys.contains(k)) {
+					if(rowNumCol.equals(k)) {
+						createBuilder.append(" " + colQuote + colName  + colQuote + " BIGINT");
+					} else if(fileNameCol.equals(k)) {
+						createBuilder.append(" " + colQuote + colName + colQuote + " VARCHAR(" + sizes[i] + ")");
+					} else if(insertTimeCol.equals(k)) {
+						createBuilder.append(" " + colQuote + colName  + colQuote + " TIMESTAMP");
+					}
 				} else {
-					createBuilder.append(" " + colQuote + colName + colQuote + " VARCHAR(" + sizes[i] + ")");
+					if(isInt[i]) {
+						createBuilder.append(" " + colQuote + colName  + colQuote + " BIGINT");
+					} else if(isNumeric[i]) {
+						createBuilder.append(" " + colQuote + colName + colQuote + " DOUBLE PRECISION");
+					} else {
+						createBuilder.append(" " + colQuote + colName + colQuote + " VARCHAR(" + sizes[i] + ")");
+					}
 				}
 				insertBuilder.append(" " + colQuote + colName + colQuote);
 				selectBuilder.append(" " + colQuote + colName + colQuote);
@@ -230,10 +252,12 @@ public final class TableControl {
 		stmt.close();			
 	}
 	
-	public long loadData(final Iterable<BurstMap> source, final RowCritique gateKeeper,
+	public long loadData(final String fileName, final Date insertTime,
+			final Iterable<BurstMap> source, final RowCritique gateKeeper,
 			final DBHandle handle) throws SQLException {
 		// scan again and populate
 		System.out.println("\texecuting: " + insertStatement);
+		final Timestamp insertTimeStamp = new Timestamp(insertTime.getTime());
 		final PreparedStatement stmtA = handle.conn.prepareStatement(insertStatement);
 		long reportTarget = 1000;
 		long nInserted = 0;
@@ -241,8 +265,14 @@ public final class TableControl {
 			if((gateKeeper==null)||(gateKeeper.accept(row))) {
 				int i = 0;
 				for(final String k: keys) {
-					if(rowNumCol.equalsIgnoreCase(k)) {
-						stmtA.setLong(i+1,nInserted+1);
+					if(predefKeys.contains(k)) {
+						if(rowNumCol.equals(k)) {
+							stmtA.setLong(i+1,nInserted+1);
+						} else if(fileNameCol.equals(k)) {
+							stmtA.setString(i+1,fileName);
+						} else if(insertTimeCol.equals(k)) {
+							stmtA.setTimestamp(i+1,insertTimeStamp);
+						}
 					} else {
 						if(isInt[i]) {
 							final Long asLong = row.getAsLong(k);

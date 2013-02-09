@@ -29,27 +29,21 @@ public class LoadTable {
 		System.out.println("\tdb:\t" + handle);
 		
 		final Iterable<BurstMap> source = new TrivialReader(inURI,sep,null,true,null, false);
-		loadTable(source, null, tableName, handle);
+		loadTable(inURI.toString(),source, null, tableName, handle);
 		handle.conn.close();
 		
 		System.out.println("done LoadTable\t" + new Date());
 	}
-
-
-
 	
 	
-
-	
-	
-	
-	public static void loadTable(final Iterable<BurstMap> source, final RowCritique gateKeeper,
+	public static void loadTable(final String sourceName, final Iterable<BurstMap> source, final RowCritique gateKeeper,
 			final String tableName, final DBHandle handle) throws SQLException {
+		final Date now = new Date();
 		final TableControl tableControl = new TableControl(tableName);
-		tableControl.scanForDefs(source, gateKeeper);
+		tableControl.scanForDefs(sourceName,source, gateKeeper);
 		tableControl.buildSQLStatements();
 		tableControl.createTable(handle);
-		final long nInserted = tableControl.loadData(source, gateKeeper, handle);
+		final long nInserted = tableControl.loadData(sourceName,now,source, gateKeeper, handle);
 		System.out.println("\tdone, wrote " + nInserted + "\t" + new Date());
 	}
 }
