@@ -1,5 +1,6 @@
 package com.winvector.util;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,7 +32,18 @@ public final class BurstMap {
 		return v.toString();
 	}
 	
-	public static boolean missingValue(final String s) {
+	
+	private static Set<String> doubleMissingVauesLC = new HashSet<String>();
+	static {
+		doubleMissingVauesLC.add("");
+		doubleMissingVauesLC.add("#");
+		doubleMissingVauesLC.add((""+Double.NaN).toLowerCase());
+		doubleMissingVauesLC.add("na");
+		doubleMissingVauesLC.add("null");
+		doubleMissingVauesLC.add("nill");
+	}
+	
+	public static boolean missingDoubleValue(final String s) {
 		if(s==null) {
 			return true;
 		}
@@ -39,11 +51,11 @@ public final class BurstMap {
 		if(t.length()<=0) {
 			return true;
 		}
-		if(t.equals("na")||t.equals("null")) {
-			return true;
-		}
-		return false;
+		return doubleMissingVauesLC.contains(t);
 	}
+	
+	public static String doublePosInfString = "" + Double.POSITIVE_INFINITY;
+	public static String doubleNegInfString = "" + Double.NEGATIVE_INFINITY;
 	
 	public double getAsDouble(final String key) {
 		final Object v = burst.get(key);
@@ -55,15 +67,21 @@ public final class BurstMap {
 		}
 		final String vstr;
 		if(v instanceof String) {
-			vstr = (String)v;
+			vstr = ((String)v).trim();;
 		} else {
-			vstr = v.toString();
+			vstr = v.toString().trim();
 		}
-		if(missingValue(vstr)) {
+		if(missingDoubleValue(vstr)) {
 			return Double.NaN;
 		}
+		if(vstr.equalsIgnoreCase(doublePosInfString)) {
+			return Double.POSITIVE_INFINITY;
+		}
+		if(vstr.equalsIgnoreCase(doubleNegInfString)) {
+			return Double.NEGATIVE_INFINITY;
+		}
 		try {
-			return Double.parseDouble(vstr.trim());
+			return Double.parseDouble(vstr);
 		} catch (Exception ex) {
 			return Double.NaN;
 		}
@@ -83,7 +101,7 @@ public final class BurstMap {
 		} else {
 			vstr = v.toString();
 		}
-		if(missingValue(vstr)) {
+		if(missingDoubleValue(vstr)) {
 			return null;
 		}
 		try {

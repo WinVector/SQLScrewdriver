@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import com.winvector.db.DBUtil.DBHandle;
 import com.winvector.util.BurstMap;
@@ -86,13 +85,53 @@ public class LoadTable {
 		return k;
 	}
 	
+	
+	
+	public static boolean couldBeDouble(final String v) {
+		if(null==v) {
+			return false;
+		}
+		final int len = v.length();
+		if(len<=0) {
+			return true;
+		}
+		if(len>40) {
+			return false;
+		}
+		if(BurstMap.missingDoubleValue(v)) {
+			return true;
+		}
+		if(v.equalsIgnoreCase(BurstMap.doublePosInfString)||v.equalsIgnoreCase(BurstMap.doubleNegInfString)) {
+			return true;
+		}
+		try {
+			Double.parseDouble(v);
+			return true;
+		} catch (NumberFormatException ex) {
+		}
+		return false;
+	}
+
+	public static boolean couldBeInt(final String v) {
+		if(null==v) {
+			return false;
+		}
+		final int len = v.length();
+		if((len<0)||(len>20)) {
+			return false;
+		}
+		try {
+			Integer.parseInt(v);
+			return true;
+		} catch (NumberFormatException ex) {
+		}
+		return false;
+	}
 
 	
 	public static void loadTable(final Iterable<BurstMap> source, final RowCritique gateKeeper,
 			final String tableName, final DBHandle handle) throws SQLException {
 		// scan once to get field names and sizes and types
-		final Pattern doubleRegexp = Pattern.compile("[-+]?[0-9]*\\.?[0-9]*([eE][-+]?[0-9]+)?"); // TODO: add missibg values and Nan
-		final Pattern intRegexp = Pattern.compile("[-+]?[0-9]+");
 		final ArrayList<String> keys = new ArrayList<String>();
 		boolean[] isInt = null;
 		boolean[] isNumeric = null;
@@ -116,15 +155,15 @@ public class LoadTable {
 						if(v!=null) {
 							v = v.trim();
 							final int vlength = v.length();
-							if((vlength>0)&&(!BurstMap.missingValue(v))) {
+							if((vlength>0)&&(!BurstMap.missingDoubleValue(v))) {
 								sizes[i] = Math.max(sizes[i],vlength+1);
 								if(isNumeric[i]) {
-									if((vlength>38)||(!doubleRegexp.matcher(v).matches())) {
+									if(!couldBeDouble(v)) {
 										isNumeric[i] = false;
 									}
 								}
 								if(isInt[i]) {
-									if((vlength>40)||(!intRegexp.matcher(v).matches())) {
+									if(!couldBeInt(v)) {
 										isInt[i] = false;
 									}
 								}
@@ -208,7 +247,7 @@ public class LoadTable {
 		{ // scan again and populate
 			System.out.println("\texecuting: " + insertStatement);
 			final PreparedStatement stmtA = handle.conn.prepareStatement(insertStatement);
-			long reportTarget = 100;
+			long reportTarget = 1000;
 			long nInserted = 0;
 			for(final BurstMap row: source) {
 				if((gateKeeper==null)||(gateKeeper.accept(row))) {
