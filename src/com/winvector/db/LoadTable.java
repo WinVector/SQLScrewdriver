@@ -14,6 +14,8 @@ public class LoadTable {
 	public static void main(final String[] args) throws Exception {
 		final Date now = new Date();
 		System.out.println("start LoadTable\t" + now);
+		System.out.println("\tfor details see: http://www.win-vector.com/blog/2011/01/sql-screwdriver/");
+		System.out.println("\tfor latest version see: https://github.com/WinVector/SQLScrewdriver");
 		if(args.length!=4) {
 			throw new Exception("use: LoadTable dbProbsURI sepChar inputURI tableName");
 		}

@@ -12,6 +12,8 @@ public class LoadFiles {
 	public static void main(final String[] args) throws Exception {
 		final Date now = new Date();
 		System.out.println("start LoadFiles\t" + now);
+		System.out.println("\tfor details see: http://www.win-vector.com/blog/2011/01/sql-screwdriver/");
+		System.out.println("\tfor latest version see: https://github.com/WinVector/SQLScrewdriver");
 		final int firstSourceArg = 3;
 		if(args.length<4) {
 			throw new Exception("use: LoadFiles dbProbsURI sepChar tableName inputURI+");
@@ -44,7 +46,7 @@ public class LoadFiles {
 			nInserted += nI;
 		}
 		handle.conn.close();
-		System.out.println("\tdone, wrote " + nInserted + "rows\t" + new Date());
+		System.out.println("\tdone, wrote " + nInserted + " rows\t" + new Date());
 		System.out.println("done LoadFiles\t" + new Date());
 	}
 }

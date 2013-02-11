@@ -57,11 +57,19 @@ public class DBDump {
 	}
 
 	public static void main(final String[] args) throws Exception {
+		System.out.println("start DBDump\t" + new Date());
+		System.out.println("\tfor details see: http://www.win-vector.com/blog/2011/01/sql-screwdriver/");
+		System.out.println("\tfor latest version see: https://github.com/WinVector/SQLScrewdriver");
+
 		final URI propsURI = new URI(args[0]);
 		final String query = args[1];
 		final File resFile = new File(args[2]);
 		
-		System.out.println("start DBDump\t" + new Date());
+		if(args.length!=3) {
+			System.out.println("use: com.winvector.db.DBDump dbPropsXMLURI query resultFile");
+			System.exit(1);
+		}
+		
 		System.out.println("\tDBProperties XML:\t" + propsURI.toString());
 		System.out.println("\tquery:\t" + query);
 		System.out.println("\tresultFile:\t" + resFile.getAbsolutePath());
