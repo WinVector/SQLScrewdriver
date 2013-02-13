@@ -3,6 +3,7 @@ package com.winvector.db;
 import java.io.File;
 import java.net.URI;
 import java.util.Date;
+import java.util.Random;
 
 import com.winvector.db.DBUtil.DBHandle;
 import com.winvector.util.BurstMap;
@@ -37,7 +38,7 @@ public class LoadTable {
 		tableControl.scanForDefs(sourceName,source, null);
 		tableControl.buildSQLStatements();
 		tableControl.createTable(handle);
-		final long nInserted = tableControl.loadData(sourceName,now,source, null, handle);
+		final long nInserted = tableControl.loadData(sourceName,now,new Random(),source, null, handle);
 		System.out.println("\tdone, wrote " + nInserted + " rows\t" + new Date());
 		handle.conn.close();
 		System.out.println("done LoadTable\t" + new Date());

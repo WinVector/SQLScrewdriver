@@ -3,6 +3,7 @@ package com.winvector.db;
 import java.io.File;
 import java.net.URI;
 import java.util.Date;
+import java.util.Random;
 
 import com.winvector.db.DBUtil.DBHandle;
 import com.winvector.util.BurstMap;
@@ -36,12 +37,13 @@ public class LoadFiles {
 		}
 		tableControl.buildSQLStatements();
 		tableControl.createTable(handle);
+		final Random rand = new Random();
 		long nInserted = 0;
 		for(int argi=firstSourceArg;argi<args.length;++argi) {
 			final URI inURI = new URI(args[argi]);
 			System.out.println("\tload source URI:\t" + inURI);
 			final Iterable<BurstMap> source = new TrivialReader(inURI,sep,null,true,null, false);
-			final long nI = tableControl.loadData(inURI.toString(),now,source, null, handle);
+			final long nI = tableControl.loadData(inURI.toString(),now,rand,source, null, handle);
 			System.out.println("\tinserted " + nI + " rows");
 			nInserted += nI;
 		}

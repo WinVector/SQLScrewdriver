@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Random;
 import java.util.Set;
 
 import com.winvector.db.DBUtil.DBHandle;
@@ -22,8 +23,9 @@ public final class TableControl {
 	private static final String rowNumCol = "ORIGFILEROWNUMBER";
 	private static final String fileNameCol = "ORIGFILENAME";
 	private static final String insertTimeCol = "ORIGINSERTTIME";
+	private static final String randCol = "ORIGINRANDGROUP";
 	private static Set<String> predefKeys = new LinkedHashSet<String>(Arrays.asList(new String[] {
-			rowNumCol, fileNameCol, insertTimeCol
+			rowNumCol, fileNameCol, insertTimeCol, randCol
 		}));
 	private static final int fNameColNum = 1;
 
@@ -192,11 +194,11 @@ public final class TableControl {
 				}
 				final String colName = plumpColumnName(k,seenColNames);
 				if(predefKeys.contains(k)) {
-					if(rowNumCol.equals(k)) {
+					if(rowNumCol.equalsIgnoreCase(k)||randCol.equalsIgnoreCase(k)) {
 						createBuilder.append(" " + colQuote + colName  + colQuote + " BIGINT");
-					} else if(fileNameCol.equals(k)) {
+					} else if(fileNameCol.equalsIgnoreCase(k)) {
 						createBuilder.append(" " + colQuote + colName + colQuote + " VARCHAR(" + sizes[i] + ")");
-					} else if(insertTimeCol.equals(k)) {
+					} else if(insertTimeCol.equalsIgnoreCase(k)) {
 						createBuilder.append(" " + colQuote + colName  + colQuote + " TIMESTAMP");
 					}
 				} else {
@@ -252,7 +254,7 @@ public final class TableControl {
 		stmt.close();			
 	}
 	
-	public long loadData(final String fileName, final Date insertTime,
+	public long loadData(final String fileName, final Date insertTime, final Random rand,
 			final Iterable<BurstMap> source, final RowCritique gateKeeper,
 			final DBHandle handle) throws SQLException {
 		// scan again and populate
@@ -266,12 +268,15 @@ public final class TableControl {
 				int i = 0;
 				for(final String k: keys) {
 					if(predefKeys.contains(k)) {
-						if(rowNumCol.equals(k)) {
+						if(rowNumCol.equalsIgnoreCase(k)) {
 							stmtA.setLong(i+1,nInserted+1);
-						} else if(fileNameCol.equals(k)) {
+						} else if(fileNameCol.equalsIgnoreCase(k)) {
 							stmtA.setString(i+1,fileName);
-						} else if(insertTimeCol.equals(k)) {
+						} else if(insertTimeCol.equalsIgnoreCase(k)) {
 							stmtA.setTimestamp(i+1,insertTimeStamp);
+						} else if(randCol.equalsIgnoreCase(k)) {
+							final int randv = rand.nextInt(1000);
+							stmtA.setLong(i+1,randv);
 						}
 					} else {
 						if(isInt[i]) {

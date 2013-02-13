@@ -4,6 +4,6 @@
  <comment>testdb</comment>
  <entry key="user">u</entry>
  <entry key="password">u</entry>
- <entry key="url">jdbc:h2:~/Downloads/h2demodb_h2</entry>
+ <entry key="url">jdbc:h2:H2DB;LOG=0;CACHE_SIZE=65536;LOCK_MODE=0;UNDO_LOG=0</entry>
  <entry key="driver">org.h2.Driver</entry>
 </properties>
