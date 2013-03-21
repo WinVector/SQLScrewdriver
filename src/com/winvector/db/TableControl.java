@@ -23,7 +23,7 @@ public final class TableControl {
 	private static final String rowNumCol = "ORIGFILEROWNUMBER";
 	private static final String fileNameCol = "ORIGFILENAME";
 	private static final String insertTimeCol = "ORIGINSERTTIME";
-	private static final String randCol = "ORIGINRANDGROUP";
+	private static final String randCol = "ORIGRANDGROUP";
 	private static Set<String> predefKeys = new LinkedHashSet<String>(Arrays.asList(new String[] {
 			rowNumCol, fileNameCol, insertTimeCol, randCol
 		}));
