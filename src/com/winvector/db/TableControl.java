@@ -306,6 +306,9 @@ public final class TableControl {
 				}
 				stmtA.executeUpdate();
 				++nInserted;
+				if(nInserted%1000==0) {
+					handle.conn.commit();
+				}
 				if(nInserted>=reportTarget) {
 					System.out.println("\twrote " + nInserted + "\t" + new Date());
 					reportTarget *= 2;
@@ -313,6 +316,7 @@ public final class TableControl {
 			}
 		}
 		stmtA.close();
+		handle.conn.commit();
 		return nInserted;
 	}
 }

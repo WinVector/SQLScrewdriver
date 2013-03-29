@@ -2,6 +2,7 @@ package com.winvector.db;
 
 import java.io.File;
 import java.net.URI;
+import java.sql.Connection;
 import java.util.Date;
 import java.util.Random;
 
@@ -31,7 +32,14 @@ public class LoadTable {
 		System.out.println("\ttableName:\t" + tableName);
 		final DBHandle handle = DBUtil.buildConnection(propsURI,false);
 		System.out.println("\tdb:\t" + handle);
-		
+		try {
+			handle.conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+		} catch (Exception ex) {
+		}
+		try {
+			handle.conn.setAutoCommit(false);
+		} catch (Exception ex) {
+		}
 		final Iterable<BurstMap> source = new TrivialReader(inURI,sep,null,true,null, false);
 		String sourceName = inURI.toString();
 		final TableControl tableControl = new TableControl(tableName);

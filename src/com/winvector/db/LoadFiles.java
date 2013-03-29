@@ -2,6 +2,7 @@ package com.winvector.db;
 
 import java.io.File;
 import java.net.URI;
+import java.sql.Connection;
 import java.util.Date;
 import java.util.Random;
 
@@ -28,6 +29,14 @@ public class LoadFiles {
 		System.out.println("\ttableName:\t" + tableName);
 		final DBHandle handle = DBUtil.buildConnection(propsURI,false);
 		System.out.println("\tdb:\t" + handle);
+		try {
+			handle.conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+		} catch (Exception ex) {
+		}
+		try {
+			handle.conn.setAutoCommit(false);
+		} catch (Exception ex) {
+		}
 		final TableControl tableControl = new TableControl(tableName);
 		for(int argi=firstSourceArg;argi<args.length;++argi) {
 			final URI inURI = new URI(args[argi]);
