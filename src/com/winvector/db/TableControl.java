@@ -233,14 +233,18 @@ public final class TableControl {
 	public void createTable(final DBHandle handle) throws SQLException {
 		// set up table
 		final Statement stmt = handle.conn.createStatement();
+		handle.conn.commit();
 		try {
 			final String dropStatement = "DROP TABLE " + tableName;
 			System.out.println("\texecuting: " + dropStatement);
 			stmt.executeUpdate(dropStatement);
+			handle.conn.commit();
 		} catch (Exception ex) {
+			handle.conn.rollback();
 		}
 		System.out.println("\texecuting: " + createStatement);
 		stmt.executeUpdate(createStatement);
+		handle.conn.commit();
 		// get type codes back
 		final ResultSet rs = stmt.executeQuery(selectStatement);
 		final ResultSetMetaData rsm = rs.getMetaData();
@@ -259,6 +263,7 @@ public final class TableControl {
 			final DBHandle handle) throws SQLException {
 		// scan again and populate
 		System.out.println("\texecuting: " + insertStatement);
+		handle.conn.commit();
 		final Timestamp insertTimeStamp = new Timestamp(insertTime.getTime());
 		final PreparedStatement stmtA = handle.conn.prepareStatement(insertStatement);
 		long reportTarget = 1000;
@@ -315,8 +320,8 @@ public final class TableControl {
 				}
 			}
 		}
-		stmtA.close();
 		handle.conn.commit();
+		stmtA.close();
 		return nInserted;
 	}
 }
