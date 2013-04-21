@@ -46,7 +46,7 @@ public class LoadFiles {
 		}
 		tableControl.buildSQLStatements();
 		tableControl.createTable(handle);
-		final Random rand = new Random();
+		final Random rand = new Random(42);
 		long nInserted = 0;
 		for(int argi=firstSourceArg;argi<args.length;++argi) {
 			final URI inURI = new URI(args[argi]);
