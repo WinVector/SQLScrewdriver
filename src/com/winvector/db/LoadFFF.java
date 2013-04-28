@@ -68,6 +68,7 @@ public final class LoadFFF {
 							final int lineLen = line.length();
 							boolean gotOne = false;
 							for(final FixedFieldDef fi: fields) {
+								// numbering from zero
 								if((fi.l<lineLen)&&(fi.r>fi.l)) {
 									final String val = line.substring(fi.l,Math.min(fi.r,lineLen)).trim();
 									gotOne |= val.length()>0;
@@ -155,11 +156,12 @@ public final class LoadFFF {
 				final String[] range = posStr.split("-",2);
 				final int l;
 				final int r;
+				// external numbering starts form 1 and is inclusive
 				if(range.length>1) {
-					l = Integer.parseInt(range[0]);
-					r = Integer.parseInt(range[1])+1;
+					l = Integer.parseInt(range[0])-1;
+					r = Integer.parseInt(range[1]);
 				} else {
-					l = Integer.parseInt(posStr);
+					l = Integer.parseInt(posStr)-1;
 					r = l + 1;
 				}
 				fieldDefs.add(new FixedFieldDef(l,r,fieldName));
