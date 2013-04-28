@@ -88,9 +88,31 @@ public final class TableControl {
 		return false;
 	}
 	
+	private static class Ticker {
+		private long reportWidth = 1000;
+		private long reportTarget = 2*reportWidth;
+		private long nDone = 0;
+		private long lastReportTime = 0;
+		private final long tickTarget = 30*1000L;
+		
+		public void tick() {
+			nDone += 1;
+			if(nDone>=reportTarget) {
+				final Date now = new Date();
+				System.out.println("\tprocessed " + nDone + "\t" + now);
+				if((lastReportTime<=0)||((now.getTime()-lastReportTime)<tickTarget)) {
+					reportWidth *= 2;
+				}
+				reportTarget += reportWidth;
+				lastReportTime = now.getTime();
+			}
+		}
+	}
+	
 	public void scanForDefs(final String fileName,
 			final Iterable<BurstMap> source, final RowCritique gateKeeper) throws SQLException {
 		// scan once to get field names and sizes and types
+		final Ticker ticker = new Ticker();
 		for(final BurstMap row: source) {
 			if((gateKeeper==null)||(gateKeeper.accept(row))) {
 				if(keys.isEmpty()) {
@@ -130,6 +152,7 @@ public final class TableControl {
 					++i;
 				}
 			}
+			ticker.tick();
 		}
 		sizes[fNameColNum] = Math.max(sizes[fNameColNum],fileName.length()+1);
 	}
@@ -266,8 +289,8 @@ public final class TableControl {
 		handle.conn.commit();
 		final Timestamp insertTimeStamp = new Timestamp(insertTime.getTime());
 		final PreparedStatement stmtA = handle.conn.prepareStatement(insertStatement);
-		long reportTarget = 1000;
 		long nInserted = 0;
+		final Ticker ticker = new Ticker();
 		for(final BurstMap row: source) {
 			if((gateKeeper==null)||(gateKeeper.accept(row))) {
 				int i = 0;
@@ -314,11 +337,8 @@ public final class TableControl {
 				if(nInserted%1000==0) {
 					handle.conn.commit();
 				}
-				if(nInserted>=reportTarget) {
-					System.out.println("\twrote " + nInserted + "\t" + new Date());
-					reportTarget *= 2;
-				}
 			}
+			ticker.tick();
 		}
 		handle.conn.commit();
 		stmtA.close();
