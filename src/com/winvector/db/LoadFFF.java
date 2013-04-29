@@ -168,7 +168,7 @@ public final class LoadFFF {
 		}
 		for(int i=0;i<defsSize;++i) {
 			final FixedFieldDef di = defs.get(i);
-			if(di.r>=di.l+1) {
+			if(di.r>di.l+1) {
 				boolean mis = false;
 				for(int j=di.l;(!mis)&&(j<di.r);++j) {
 					if(!covered.get(j)) {
