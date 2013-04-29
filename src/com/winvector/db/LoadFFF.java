@@ -6,6 +6,7 @@ import java.io.LineNumberReader;
 import java.net.URI;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -130,6 +131,64 @@ public final class LoadFFF {
 		}
 	}
 	
+	private static ArrayList<FixedFieldDef> readFieldDefs(final Iterable<BurstMap> defSource) {
+		final ArrayList<FixedFieldDef> fieldDefs = new ArrayList<FixedFieldDef>();
+		for(final BurstMap di: defSource) {
+			final String posStr = di.getAsString("Position");
+			final String fieldName = di.getAsString("Field");
+			final String[] range = posStr.split("-",2);
+			final int l;
+			final int r;
+			// external numbering starts form 1 and is inclusive
+			if(range.length>1) {
+				l = Integer.parseInt(range[0])-1;
+				r = Integer.parseInt(range[1]);
+			} else {
+				l = Integer.parseInt(posStr)-1;
+				r = l + 1;
+			}
+			fieldDefs.add(new FixedFieldDef(l,r,fieldName));
+		}
+		return fieldDefs;
+	}
+	
+	private static ArrayList<FixedFieldDef> notCoveredBySingles(ArrayList<FixedFieldDef> defs) {
+		final ArrayList<FixedFieldDef> r = new ArrayList<FixedFieldDef>();
+		final int defsSize = defs.size();
+		final BitSet take = new BitSet(defsSize);
+		final BitSet covered = new BitSet();
+		for(int i=0;i<defsSize;++i) {
+			final FixedFieldDef di = defs.get(i);
+			if(di.r==di.l+1) {
+				if(!covered.get(di.l)) {
+					covered.set(di.l);
+					take.set(i);
+				}
+			}
+		}
+		for(int i=0;i<defsSize;++i) {
+			final FixedFieldDef di = defs.get(i);
+			if(di.r>=di.l+1) {
+				boolean mis = false;
+				for(int j=di.l;(!mis)&&(j<di.r);++j) {
+					if(!covered.get(j)) {
+						mis = true;
+					}
+				}
+				if(mis) {
+					take.set(i);
+				}
+			}
+		}
+		for(int i=0;i<defsSize;++i) {
+			if(take.get(i)) {
+				final FixedFieldDef di = defs.get(i);
+				r.add(di);
+			}
+		}
+		return r;
+	}
+	
 	public static void main(final String[] args) throws Exception {
 		final Date now = new Date();
 		System.out.println("start LoadFFF\t" + now);
@@ -147,26 +206,8 @@ public final class LoadFFF {
 		System.out.println("\ttableName:\t" + tableName);
 		final DBHandle handle = DBUtil.buildConnection(propsURI,false);
 		System.out.println("\tdb:\t" + handle);
-		final ArrayList<FixedFieldDef> fieldDefs = new ArrayList<FixedFieldDef>();
-		{
-			final Iterable<BurstMap> defs = new TrivialReader(fieldSpecURI,'\t',null,true,null, false);
-			for(final BurstMap di: defs) {
-				final String posStr = di.getAsString("Position");
-				final String fieldName = di.getAsString("Field");
-				final String[] range = posStr.split("-",2);
-				final int l;
-				final int r;
-				// external numbering starts form 1 and is inclusive
-				if(range.length>1) {
-					l = Integer.parseInt(range[0])-1;
-					r = Integer.parseInt(range[1]);
-				} else {
-					l = Integer.parseInt(posStr)-1;
-					r = l + 1;
-				}
-				fieldDefs.add(new FixedFieldDef(l,r,fieldName));
-			}
-		}
+		final ArrayList<FixedFieldDef> origFieldDefs = readFieldDefs(new TrivialReader(fieldSpecURI,'\t',null,true,null, false));
+		final ArrayList<FixedFieldDef> fieldDefs = notCoveredBySingles(origFieldDefs);
 		try {
 			handle.conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 		} catch (Exception ex) {
