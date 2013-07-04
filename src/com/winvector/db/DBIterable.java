@@ -81,7 +81,15 @@ public final class DBIterable implements Iterable<BurstMap> {
 					int n = colNames.length;
 					final Map<String,Object> mp = new LinkedHashMap<String,Object>();
 					for(int i=0;i<n;++i) {
-						mp.put(colNames[i],colInfos[i].extracter.getField(rs,i));
+						Object field = null;
+						try {
+							field = colInfos[i].extracter.getField(rs,i);
+						} catch (Exception ex) {
+						}
+						if(null==field) { // belt and suspenders version
+							field = SQLTypeAdapter.stringExtracter.getField(rs,i);
+						}
+						mp.put(colNames[i],field);
 					}
 					next = new BurstMap("db",mp); 
 					if(!rs.next()) {

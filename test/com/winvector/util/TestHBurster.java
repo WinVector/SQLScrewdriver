@@ -1,10 +1,12 @@
 package com.winvector.util;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-import com.winvector.util.HBurster;
+import org.junit.Test;
 
-public class TestHBurster extends TestCase {
+public class TestHBurster {
+	@Test
 	public void testFix() {
 		final String sep = "\\|";
 		final String[] headerFlds = HBurster.buildHeaderFlds("a|a|b".split(sep));
