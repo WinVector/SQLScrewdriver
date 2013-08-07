@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 
@@ -42,8 +43,14 @@ public final class TableControl {
 	private int[] columnTypeCode = null;
 	private String[] columnClassName = null;
 
+	private final String SQLDOUBLETYPE;
+	private final String SQLINTTYPE;
+	private final String SQLTIMETYPE;
 	
-	public TableControl(final String tableName) {
+	public TableControl(final Properties props, final String tableName) {
+		SQLDOUBLETYPE = props.getProperty("SQLDOUBLE", "DOUBLE PRECISION");
+		SQLINTTYPE = props.getProperty("SQLINT", "BIGINT"); // Oracle uses NUMBER
+		SQLTIMETYPE = props.getProperty("SQLTIME", "TIMESTAMP");
 		this.tableName = tableName;
 	}
 	
@@ -218,17 +225,17 @@ public final class TableControl {
 				final String colName = plumpColumnName(k,seenColNames);
 				if(predefKeys.contains(k)) {
 					if(rowNumCol.equalsIgnoreCase(k)||randCol.equalsIgnoreCase(k)) {
-						createBuilder.append(" " + colQuote + colName  + colQuote + " BIGINT");
+						createBuilder.append(" " + colQuote + colName  + colQuote + " " + SQLINTTYPE);
 					} else if(fileNameCol.equalsIgnoreCase(k)) {
 						createBuilder.append(" " + colQuote + colName + colQuote + " VARCHAR(" + sizes[i] + ")");
 					} else if(insertTimeCol.equalsIgnoreCase(k)) {
-						createBuilder.append(" " + colQuote + colName  + colQuote + " TIMESTAMP");
+						createBuilder.append(" " + colQuote + colName  + colQuote + " " + SQLTIMETYPE);
 					}
 				} else {
 					if(isInt[i]) {
-						createBuilder.append(" " + colQuote + colName  + colQuote + " BIGINT");
+						createBuilder.append(" " + colQuote + colName  + colQuote + " " + SQLINTTYPE);
 					} else if(isNumeric[i]) {
-						createBuilder.append(" " + colQuote + colName + colQuote + " DOUBLE PRECISION");
+						createBuilder.append(" " + colQuote + colName + colQuote + " " + SQLDOUBLETYPE);
 					} else {
 						createBuilder.append(" " + colQuote + colName + colQuote + " VARCHAR(" + sizes[i] + ")");
 					}

@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.URI;
 import java.sql.Connection;
 import java.util.Date;
+import java.util.Properties;
 import java.util.Random;
 
 import com.winvector.db.DBUtil.DBHandle;
@@ -27,7 +28,8 @@ public class LoadFiles {
 		System.out.println("\tDBProperties XML:\t" + propsURI.toString());
 		System.out.println("\tsep: " + sep);
 		System.out.println("\ttableName:\t" + tableName);
-		final DBHandle handle = DBUtil.buildConnection(propsURI,false);
+		final Properties props = DBUtil.loadProps(propsURI);
+		final DBHandle handle = DBUtil.buildConnection(propsURI.toString(),props,false);
 		System.out.println("\tdb:\t" + handle);
 		try {
 			handle.conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
@@ -37,7 +39,7 @@ public class LoadFiles {
 			handle.conn.setAutoCommit(false);
 		} catch (Exception ex) {
 		}
-		final TableControl tableControl = new TableControl(tableName);
+		final TableControl tableControl = new TableControl(props,tableName);
 		for(int argi=firstSourceArg;argi<args.length;++argi) {
 			final URI inURI = new URI(args[argi]);
 			System.out.println("\tscan source URI:\t" + inURI);

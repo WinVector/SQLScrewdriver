@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.URI;
 import java.sql.Connection;
 import java.util.Date;
+import java.util.Properties;
 import java.util.Random;
 
 import com.winvector.db.DBUtil.DBHandle;
@@ -30,7 +31,8 @@ public class LoadTable {
 		System.out.println("\tsep: " + sep);
 		System.out.println("\tSource URI:\t" + inURI);
 		System.out.println("\ttableName:\t" + tableName);
-		final DBHandle handle = DBUtil.buildConnection(propsURI,false);
+		final Properties props = DBUtil.loadProps(propsURI);
+		final DBHandle handle = DBUtil.buildConnection(propsURI.toString(),props,false);
 		System.out.println("\tdb:\t" + handle);
 		try {
 			handle.conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
@@ -41,8 +43,8 @@ public class LoadTable {
 		} catch (Exception ex) {
 		}
 		final Iterable<BurstMap> source = new TrivialReader(inURI,sep,null,true,null, false);
-		String sourceName = inURI.toString();
-		final TableControl tableControl = new TableControl(tableName);
+		final String sourceName = inURI.toString();
+		final TableControl tableControl = new TableControl(props,tableName);
 		tableControl.scanForDefs(sourceName,source, null);
 		tableControl.buildSQLStatements();
 		tableControl.createTable(handle);

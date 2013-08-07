@@ -6,6 +6,7 @@ import java.net.URI;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
+import java.util.Properties;
 
 import com.winvector.db.DBIterable.RSIterator;
 //import com.winvector.db.DBIterable.TypeInfo;
@@ -73,7 +74,8 @@ public class DBDump {
 		System.out.println("\tDBProperties XML:\t" + propsURI.toString());
 		System.out.println("\tquery:\t" + query);
 		System.out.println("\tresultFile:\t" + resFile.getAbsolutePath());
-		final DBHandle handle = DBUtil.buildConnection(propsURI,true);
+		final Properties props = DBUtil.loadProps(propsURI);
+		final DBHandle handle = DBUtil.buildConnection(propsURI.toString(),props,true);
 		System.out.println("\tdb:\t" + handle);
 		final PrintStream p = TrivialReader.openPrintStream(resFile);
 		

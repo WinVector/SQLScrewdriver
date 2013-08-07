@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Properties;
 import java.util.Random;
 
 import com.winvector.db.DBUtil.DBHandle;
@@ -204,7 +205,8 @@ public final class LoadFFF {
 		System.out.println("\tcwd: " + (new File(".")).getAbsolutePath());
 		System.out.println("\tDBProperties XML:\t" + propsURI.toString());
 		System.out.println("\ttableName:\t" + tableName);
-		final DBHandle handle = DBUtil.buildConnection(propsURI,false);
+		final Properties props = DBUtil.loadProps(propsURI);
+		final DBHandle handle = DBUtil.buildConnection(propsURI.toString(),props,false);
 		System.out.println("\tdb:\t" + handle);
 		final ArrayList<FixedFieldDef> origFieldDefs = readFieldDefs(new TrivialReader(fieldSpecURI,'\t',null,true,null, false));
 		final ArrayList<FixedFieldDef> fieldDefs = notCoveredBySingles(origFieldDefs);
@@ -216,7 +218,7 @@ public final class LoadFFF {
 			handle.conn.setAutoCommit(false);
 		} catch (Exception ex) {
 		}
-		final TableControl tableControl = new TableControl(tableName);
+		final TableControl tableControl = new TableControl(props,tableName);
 		final ArrayList<Iterable<BurstMap>> sources = new ArrayList<Iterable<BurstMap>>();
 		for(int argi=firstSourceArg;argi<args.length;++argi) {
 			final URI inURI = new URI(args[argi]);

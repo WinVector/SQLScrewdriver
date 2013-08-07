@@ -2,6 +2,7 @@ package com.winvector.db;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -75,6 +76,14 @@ public final class DBUtil {
 				readOnly) ;
 	}
 	
+	public static Properties loadProps(final URI propsURI) throws MalformedURLException, IOException {
+		final InputStream is = propsURI.toURL().openStream();
+		final Properties props = new Properties();
+		props.loadFromXML(is);
+		is.close();
+		return props;
+	}
+	
 	/**
 	example:
 	<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
@@ -85,17 +94,15 @@ public final class DBUtil {
 	 <entry key="password">miner_demo</entry>
 	 <entry key="driver">org.postgresql.Driver</entry>
 	</properties>
+	 * @throws IOException 
+	 * @throws MalformedURLException 
+	 * @throws ClassNotFoundException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * @throws SQLException 
 	**/
-	public static DBHandle buildConnection(final URI propsURI, final boolean readOnly) throws IOException {
-		try {
-			final InputStream is = propsURI.toURL().openStream();
-			final Properties props = new Properties();
-			props.loadFromXML(is);
-			is.close();
-			return buildConnection(propsURI.toString(),props,readOnly);
-		} catch (Exception ex) {
-			throw new IOException("problem with resource: " + propsURI.toString()
-					+ "\tcaught: " + ex);
-		}
+	public static DBHandle buildConnection(final URI propsURI, final boolean readOnly) throws MalformedURLException, IOException, SQLException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+		final Properties props = loadProps(propsURI);
+		return buildConnection(propsURI.toString(),props,readOnly);
 	}
 }
