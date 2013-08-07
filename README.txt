@@ -5,7 +5,7 @@ Crude SQL dump/restore tool (database agnostic, uses JDBC).
 
 Described at: http://www.win-vector.com/blog/2011/01/sql-screwdriver/
 
-Example use: dump form one PostgreSQL DB and restore to another (not all column types preserved).
+Example use: dump from one PostgreSQL DB and restore to another (not all column types preserved).
 
 (SQLScrewdriver.jar comes from https://github.com/WinVector/SQLScrewdriver/blob/master/SQLScrewdriver.jar or https://github.com/WinVector/SQLScrewdriver and postgresql.jar is the appropriate DB driver from http://jdbc.postgresql.org/download.html )
 
@@ -36,3 +36,16 @@ and db.xml is:
 </properties>
 
 with passwords filled in.
+
+Additional property keys can set the SQL types used to populate integer types, double types and timestamp types.  The defaults are:
+
+ <entry key="SQLDOUBLE">DOUBLE PRECISION</entry>
+ <entry key="SQLINT">BIGINT</entry>
+ <entry key="SQLTIME">TIMESTAMP</entry>
+
+For Oracle databases we suggest adding the following line to your db properties files:
+
+ <entry key="SQLINT">NUMBER</entry>
+
+
+The units tests in the test directory can be run if you include Junit and H2 database jars.
