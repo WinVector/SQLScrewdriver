@@ -20,7 +20,6 @@ import com.winvector.util.BurstMap;
 import com.winvector.util.RowCritique;
 
 public final class TableControl {
-	private static final String colQuote = "\"";
 	private static final String rowNumCol = "ORIGFILEROWNUMBER";
 	private static final String fileNameCol = "ORIGFILENAME";
 	private static final String insertTimeCol = "ORIGINSERTTIME";
@@ -36,6 +35,8 @@ public final class TableControl {
 	private boolean[] isNumeric = null;
 	private int[] sizes = null;
 
+	private final String colQuote;
+	
 	private String createStatement = null;
 	private String insertStatement = null;
 	private String selectStatement = null;
@@ -47,7 +48,8 @@ public final class TableControl {
 	private final String SQLINTTYPE;
 	private final String SQLTIMETYPE;
 	
-	public TableControl(final Properties props, final String tableName) {
+	public TableControl(final DBUtil.DBHandle dbHandle, final Properties props, final String tableName) {
+		colQuote = dbHandle.colQuote;
 		SQLDOUBLETYPE = props.getProperty("SQLDOUBLE", "DOUBLE PRECISION");
 		SQLINTTYPE = props.getProperty("SQLINT", "BIGINT"); // Oracle uses NUMBER
 		SQLTIMETYPE = props.getProperty("SQLTIME", "TIMESTAMP");

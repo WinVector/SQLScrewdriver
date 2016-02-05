@@ -39,7 +39,7 @@ public class LoadFiles {
 			handle.conn.setAutoCommit(false);
 		} catch (Exception ex) {
 		}
-		final TableControl tableControl = new TableControl(props,tableName);
+		final TableControl tableControl = new TableControl(handle,props,tableName);
 		for(int argi=firstSourceArg;argi<args.length;++argi) {
 			final URI inURI = new URI(args[argi]);
 			System.out.println("\tscan source URI:\t" + inURI);

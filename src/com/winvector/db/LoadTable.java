@@ -44,7 +44,7 @@ public class LoadTable {
 		}
 		final Iterable<BurstMap> source = new TrivialReader(inURI,sep,null,true,null, false);
 		final String sourceName = inURI.toString();
-		final TableControl tableControl = new TableControl(props,tableName);
+		final TableControl tableControl = new TableControl(handle,props,tableName);
 		tableControl.scanForDefs(sourceName,source, null);
 		tableControl.buildSQLStatements();
 		tableControl.createTable(handle);

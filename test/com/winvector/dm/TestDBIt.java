@@ -58,8 +58,9 @@ public class TestDBIt {
 		final String dbPassword = "JunitTestDB";
 		final String dbURL = "jdbc:h2:" + dbName;
 		final String driver = "org.h2.Driver";
+		final String colQuote = "\"";
 		final boolean readOnly = false;
-		final DBHandle dbhandle = DBUtil.buildConnection(comment, dbUserName, dbPassword, dbURL, driver, readOnly);
+		final DBHandle dbhandle = DBUtil.buildConnection(comment, dbUserName, dbPassword, dbURL, driver, readOnly,colQuote);
 		Exception ex = null;
 		try {
 			final Statement stmt = dbhandle.conn.createStatement();
@@ -122,7 +123,7 @@ public class TestDBIt {
 			mp.put("B",5);
 			mp.put("C","XXX");
 			source.add(new BurstMap("test",mp));
-			final TableControl tableControl = new TableControl(p,"TESTTABLE");
+			final TableControl tableControl = new TableControl(dbhandle,p,"TESTTABLE");
 			tableControl.scanForDefs(sourceName,source, null);
 			tableControl.buildSQLStatements();
 			tableControl.createTable(dbhandle);
