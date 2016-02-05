@@ -1,4 +1,11 @@
 
+Update: 2-5-2016
+
+This package is getting a bit old (though we do use it for some projects).
+I just added a "colquote" key to the db connection properties/xml (see DBUtil.java line 19) to close an issue in using this tool with MySQL.
+
+For our current advice on semi-generic methods for loading data (such as dbWriteTable() in R) please see here http://www.win-vector.com/blog/2016/02/using-postgresql-in-r/ .
+
 3-27-2012
 
 Crude SQL dump/restore tool (database agnostic, uses JDBC).
